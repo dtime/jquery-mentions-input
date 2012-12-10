@@ -18,7 +18,8 @@
     var a, b, c, d, e, f, g, h, i, j, k;
     if (!(i = this[0])) return;
     if (!$(i).is("textarea")) return;
-    if (i.selectionEnd == null) return;
+    var chars = $(i).val().length;
+    if (chars == null) return;
     g = {
       position: "absolute",
       overflow: "auto",
@@ -29,7 +30,8 @@
       left: -9999
     }, h = ["boxSizing", "fontFamily", "fontSize", "fontStyle", "fontVariant", "fontWeight", "height", "letterSpacing", "lineHeight", "paddingBottom", "paddingLeft", "paddingRight", "paddingTop", "textDecoration", "textIndent", "textTransform", "width", "word-spacing"];
     for (j = 0, k = h.length; j < k; j++) e = h[j], g[e] = $(i).css(e);
-    return c = document.createElement("div"), $(c).css(g), $(i).after(c), b = document.createTextNode(i.value.substring(0, i.selectionEnd)), a = document.createTextNode(i.value.substring(i.selectionEnd)), d = document.createElement("span"), d.innerHTML = "&nbsp;", c.appendChild(b), c.appendChild(d), c.appendChild(a), c.scrollTop = i.scrollTop, f = $(d).position(), $(c).remove(), f
+    c = document.createElement("div"), $(c).css(g), $(i).after(c), b = document.createTextNode(i.value.substring(0, chars)), a = document.createTextNode(i.value.substring(chars)), d = document.createElement("span"), d.innerHTML = "&nbsp;", c.appendChild(b), c.appendChild(d), c.appendChild(a), c.scrollTop = i.scrollTop, f = $(d).position(), $(c).remove(), f
+    return f
   }
 
   // Settings
@@ -70,26 +72,20 @@
       return value.replace(new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + term + ")(?![^<>]*>)(?![^&;]+;)", "gi"), "<b>$1</b>");
     },
 
-    getCaretPosition: function (el) {
-      if (el.selectionStart) {
-        return el.selectionStart;
-      } else if (document.selection) {
-        el.focus();
-
-        var r = document.selection.createRange();
-        if (r == null) {
-          return 0;
+    getCaretPosition: function(el) {
+        var pos = 0;
+        if('selectionStart' in el) {
+            pos = el.selectionStart;
+        } else if('selection' in document) {
+            el.focus();
+            var Sel = document.selection.createRange();
+            var SelLength = document.selection.createRange().text.length;
+            Sel.moveStart('character', -el.value.length);
+            pos = Sel.text.length - SelLength;
         }
-
-        var re = el.createTextRange(),
-            rc = re.duplicate();
-        re.moveToBookmark(r.getBookmark());
-        rc.setEndPoint('EndToStart', re);
-
-        return rc.text.length;
-      }
-      return 0;
+        return pos;
     },
+
     setCaratPosition : function (domNode, caretPos) {
       if (domNode.createTextRange) {
         var range = domNode.createTextRange();
@@ -104,6 +100,7 @@
         }
       }
     },
+
     rtrim: function(string) {
       return string.replace(/\s+$/,"");
     }
@@ -214,7 +211,6 @@
     }
 
     function addMention(mention) {
-
       var currentMessage = getInputBoxValue();
       var currentTriggerChar = mention.trigger ? mention.trigger : settings.defaultTriggerChar;
 
@@ -222,7 +218,6 @@
       var regex = new RegExp("\\" + currentTriggerChar + currentDataQuery, "gi");
       var lastIndex = 0;
       var caret = utils.getCaretPosition(elmInputBox[0]);
-
 
       while(regex.exec(currentMessage) != null){
         // Move last index unless we've passed the caret.
@@ -260,7 +255,10 @@
 
       // Set correct focus and selection
       elmInputBox.focus();
-      utils.setCaratPosition(elmInputBox[0], startEndIndex);
+
+      // Removed because it doesn't work in IE8 - can we make it
+      // work again?
+      //utils.setCaratPosition(elmInputBox[0], startEndIndex);
     }
 
     function getInputBoxValue() {
@@ -411,7 +409,7 @@
           'id'      : utils.htmlEncode(item.id),
           'display' : utils.htmlEncode(item[settings.display]),
           'type'    : utils.htmlEncode(item.type),
-          'content' : utils.highlightTerm(utils.htmlEncode((item.name)), query)
+          'content' : item.autocomplete_content ? item.autocomplete_content : utils.htmlEncode(item.name)
         })).attr('data-uid', itemUid);
 
         if (index === 0) {
@@ -423,10 +421,11 @@
 
           if (item.avatar) {
             elmIcon = $(settings.templates.autocompleteListItemAvatar({ avatar : item.avatar }));
-          } else {
+            elmIcon.prependTo(elmListItem);
+          } else if (item.icon) {
             elmIcon = $(settings.templates.autocompleteListItemIcon({ icon : item.icon }));
+            elmIcon.prependTo(elmListItem);
           }
-          elmIcon.prependTo(elmListItem);
         }
         elmListItem = elmListItem.appendTo(elmDropDownList);
       });
