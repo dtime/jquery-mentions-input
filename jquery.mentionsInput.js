@@ -470,6 +470,7 @@
     }
 
     function positionAutocomplete(elmAutocompleteList, elmInputBox) {
+      elmAutocompleteList.addClass('onCaret');
       var position = elmInputBox.textareaSelectionPosition(),
           lineHeight = parseInt(elmInputBox.css('line-height'), 10) || 18;
       elmAutocompleteList.css('width', '12em'); // Sort of a guess
