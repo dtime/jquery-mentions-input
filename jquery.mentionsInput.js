@@ -459,6 +459,10 @@
                 'trigger': match[1]
             });
         }
+        // Recalculate approxIndex
+        _.each(mentionsCollection, function(mention) {
+          mention.approxIndex = newMentionText.indexOf(mention.value);
+        });
         elmInputBox.val(newMentionText);
         updateValues();
       }
