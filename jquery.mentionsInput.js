@@ -193,8 +193,8 @@
       mentionText = mentionText.replace(/\n/g, '<br />');
       mentionText = mentionText.replace(/ {2}/g, '&nbsp; ');
 
-      elmInputBox.data('messageText', syntaxMessage);
-      elmMentionsOverlay.find('div').html(mentionText);
+      (elmInputBox) ? elmInputBox.data('messageText', syntaxMessage) : 0;
+      (elmMentionsOverlay) ? elmMentionsOverlay.find('div').html(mentionText) : 0;
     }
 
     function resetBuffer() {
@@ -262,7 +262,7 @@
     }
 
     function getInputBoxValue() {
-      return $.trim(elmInputBox.val());
+      return (elmInputBox) ? $.trim(elmInputBox.val()) : '';
     }
 
     function onAutoCompleteItemClick(e) {
@@ -459,17 +459,22 @@
                 'trigger': match[1]
             });
         }
+        // Recalculate approxIndex
+        _.each(mentionsCollection, function(mention) {
+          mention.approxIndex = newMentionText.indexOf(mention.value);
+        });
         elmInputBox.val(newMentionText);
         updateValues();
       }
       else{
-        elmInputBox.val('');
+        (elmInputBox) ? elmInputBox.val('') : 0;
         mentionsCollection = [];
         updateValues();
       }
     }
 
     function positionAutocomplete(elmAutocompleteList, elmInputBox) {
+      elmAutocompleteList.addClass('onCaret');
       var position = elmInputBox.textareaSelectionPosition(),
           lineHeight = parseInt(elmInputBox.css('line-height'), 10) || 18;
       elmAutocompleteList.css('width', '12em'); // Sort of a guess
